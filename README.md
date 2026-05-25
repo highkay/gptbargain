@@ -16,6 +16,7 @@
 - [src/templates.ts](./src/templates.ts)：登录页、后台页、搜索页
 - [src/types.ts](./src/types.ts)：共享类型
 - [migrations/0001_init.sql](./migrations/0001_init.sql)：D1 表结构
+- [docs/security.md](./docs/security.md)：凭据边界和发布前泄露检查
 
 ## 准备
 
@@ -53,6 +54,8 @@ wrangler secret put SESSION_SECRET
 - `ADMIN_PASSWORD`：后台首次登录密码；后台保存新密码后会优先使用 KV 中的密码记录
 - `SESSION_SECRET`：Cookie 签名密钥，建议 32 字节以上随机字符串
 
+不要把实际密码或签名密钥写入代码、README、`wrangler.jsonc` 或 Git 历史。更多边界见 [docs/security.md](./docs/security.md)。
+
 5. 可选注入 NexusVault 兜底登录态
 
 ```bash
@@ -70,6 +73,7 @@ npm run dev
 ```
 
 如果要本地调试 secret，也可以使用 Wrangler 支持的本地 secret 配置。
+本地 secret 文件应放在 `.dev.vars` 或 `.dev.vars.*`，这两类文件已经被 `.gitignore` 排除。
 
 ## 部署
 
@@ -132,7 +136,7 @@ npm run deploy
 
 - `shop_configs`：后台保存后的店铺配置
 - `shop_snapshots`：单店快照
-- `app_state`：当前全站聚合结果、最近一次刷新状态、定时刷新游标
+- `app_state`：当前全站聚合结果、刷新状态、定时刷新游标
 
 ## 注意
 
@@ -141,5 +145,6 @@ npm run deploy
 - 店铺配置一旦在后台保存过，运行时会优先读 `D1`，不再直接使用代码里的默认数组
 - `ldxp-chongapi` 默认走 `client` 模式，用浏览器直连 `pay.ldxp.cn`，避免 Cloudflare Worker 出口被该站点拦截
 - 平台访问凭据当前按站点写入 `KV`；对于 `NexusVault`，默认键内容是 `scm_session`
+- `.wrangler/` 是本地 Worker 状态目录，可能包含本地 KV/D1 调试数据，已被 `.gitignore` 排除，不应提交
 - `store.dimosky.com` 这类站点会隐藏部分精确库存，聚合结果里会保留“有货/售罄/未知”的边界，不伪造数字
 - `NexusVault` 当前接入的是“商家候选榜单”，不是传统店铺 SKU 列表；聚合页会把每个商家候选归一成一条可搜索记录，详情页展示的是近期样本和检查结果
